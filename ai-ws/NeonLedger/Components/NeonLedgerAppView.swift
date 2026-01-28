@@ -131,106 +131,40 @@ struct CustomTabBar: View {
         HStack(spacing: 0) {
             ForEach(AppScreen.allCases, id: \.self) { screen in
                 Button(action: {
-                    // 1. 先触发选中动画
-                    // 动态特征：粘性阻尼 (dampingFraction: 0.7)、弹性回弹 (response: 0.5)
-                    withAnimation(.spring(response: 0.5, dampingFraction: 0.7, blendDuration: 0.5)) {
-                        selectedScreen = screen
-                    }
-                    
-                    // 2. 根据不同 Tab 执行导航逻辑
-                    if screen == .home {
-                        onNavigate("home")
-                    } else if screen == .ai {
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-                            onNavigate("assistant")
-                        }
-                    } else if screen == .stats {
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-                            onNavigate("stats")
-                        }
-                    } else if screen == .assets {
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-                            onNavigate("assets")
-                        }
-                    } else if screen == .profile {
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-                            onNavigate("profile")
-                        }
-                    }
+                    handleTabSelection(screen)
                 }) {
-                    ZStack {
-                        // MARK: - 视觉形态：液态玻璃胶囊
-                        if selectedScreen == screen {
-                            Capsule()
-                                .fill(
-                                    // 液态流动：使用流光渐变
-                                    LinearGradient(
-                                        colors: [
-                                            Color(red: 0.0, green: 0.48, blue: 1.0).opacity(0.15), // 浅蓝光晕
-                                            Color(red: 0.0, green: 0.48, blue: 1.0).opacity(0.02)  // 渐隐
-                                        ],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    )
-                                )
-                                .overlay(
-                                    // 形状变形与高光：模拟玻璃表面张力
-                                    Capsule()
-                                        .strokeBorder(
-                                            LinearGradient(
-                                                colors: [
-                                                    Color.white.opacity(0.6), // 强烈的高光
-                                                    Color.white.opacity(0.1),
-                                                    Color.clear
-                                                ],
-                                                startPoint: .topLeading,
-                                                endPoint: .bottomTrailing
-                                            ),
-                                            lineWidth: 1
-                                        )
-                                )
-                                .background(
-                                    // 添加模糊层增强玻璃质感
-                                    Capsule()
-                                        .fill(.ultraThinMaterial)
-                                        .opacity(0.5)
-                                )
-                                // 交互细节：混合模式切换，实现"无缝融合"
-                                .blendMode(.hardLight)
-                                // 形状变形：通过 geometry match 实现位置和形状的流体过渡
-                                .matchedGeometryEffect(id: "ActiveTab", in: animation)
-                                // 阴影：增加立体感
-                                .shadow(color: Color(red: 0.0, green: 0.48, blue: 1.0).opacity(0.2), radius: 8, x: 0, y: 4)
-                        }
+                    VStack(spacing: 4) {
+                        Image(systemName: screen.icon)
+                            .font(.system(size: 20, weight: .medium))
+                            .symbolEffect(.bounce, value: selectedScreen == screen)
                         
-                        // 图标与文字内容
-                        VStack(spacing: 4) {
-                            Image(systemName: screen.icon)
-                                .font(.system(size: 20, weight: .medium))
-                                .symbolEffect(.bounce, value: selectedScreen == screen)
-                            
-                            Text(screen.name)
-                                .font(.system(size: 10, weight: .medium))
-                        }
-                        // 交互细节：图标颜色渐变
-                        .foregroundStyle(
-                            selectedScreen == screen
-                            ? AnyShapeStyle(
-                                LinearGradient(
-                                    colors: [
-                                        Color(red: 0.0, green: 0.48, blue: 1.0), // 系统蓝
-                                        Color(red: 0.0, green: 0.7, blue: 1.0)    // 亮青蓝
-                                    ],
-                                    startPoint: .top,
-                                    endPoint: .bottom
-                                )
+                        Text(screen.name)
+                            .font(.system(size: 10, weight: .medium))
+                    }
+                    // 交互细节：图标颜色渐变
+                    .foregroundStyle(
+                        selectedScreen == screen
+                        ? AnyShapeStyle(
+                            LinearGradient(
+                                colors: [
+                                    Color(red: 0.0, green: 0.48, blue: 1.0), // 系统蓝
+                                    Color(red: 0.0, green: 0.7, blue: 1.0)    // 亮青蓝
+                                ],
+                                startPoint: .top,
+                                endPoint: .bottom
                             )
-                            : AnyShapeStyle(Color.black.opacity(0.7)) // 未选中态深色
                         )
-                        .scaleEffect(selectedScreen == screen ? 1.15 : 1.0)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 12)
-                        .contentShape(Rectangle())
+                        : AnyShapeStyle(Color.black.opacity(0.7)) // 未选中态深色
+                    )
+                    .scaleEffect(selectedScreen == screen ? 1.15 : 1.0)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 12)
+                    .contentShape(Rectangle())
+                    .background {
+                        if selectedScreen == screen {
+                            ActiveTabIndicator()
+                                .matchedGeometryEffect(id: "ActiveTab", in: animation)
+                        }
                     }
                 }
             }
@@ -244,6 +178,70 @@ struct CustomTabBar: View {
         .padding(.horizontal, 20)
         .padding(.bottom, 10)
         .frame(height: 80) // 限制高度，防止动画变形
+    }
+    
+    private func handleTabSelection(_ screen: AppScreen) {
+        // 1. 触发选中动画
+        // 优化：加快响应速度 (response: 0.3)，减少阻尼感，让交互更"跟手"
+        withAnimation(.spring(response: 0.3, dampingFraction: 0.75, blendDuration: 0.2)) {
+            selectedScreen = screen
+        }
+        
+        // 2. 执行导航逻辑
+        // 优化：移除人为延迟，立即响应用户点击，解决"不跟手"的问题
+        navigate(to: screen)
+    }
+    
+    private func navigate(to screen: AppScreen) {
+        switch screen {
+        case .home: onNavigate("home")
+        case .ai: onNavigate("assistant")
+        case .stats: onNavigate("stats")
+        case .assets: onNavigate("assets")
+        case .profile: onNavigate("profile")
+        }
+    }
+}
+
+// 独立的活跃 Tab 指示器视图，优化渲染性能
+struct ActiveTabIndicator: View {
+    var body: some View {
+        Capsule()
+            .fill(
+                // 液态流动：使用流光渐变
+                LinearGradient(
+                    colors: [
+                        Color(red: 0.0, green: 0.48, blue: 1.0).opacity(0.15), // 浅蓝光晕
+                        Color(red: 0.0, green: 0.48, blue: 1.0).opacity(0.02)  // 渐隐
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            )
+            .overlay(
+                // 形状变形与高光：模拟玻璃表面张力
+                Capsule()
+                    .strokeBorder(
+                        LinearGradient(
+                            colors: [
+                                Color.white.opacity(0.6), // 强烈的高光
+                                Color.white.opacity(0.1),
+                                Color.clear
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ),
+                        lineWidth: 1
+                    )
+            )
+            .background(
+                // 添加模糊层增强玻璃质感
+                Capsule()
+                    .fill(.ultraThinMaterial)
+                    .opacity(0.5)
+            )
+            // 性能优化：移除 .blendMode(.hardLight) 以减少离屏渲染开销
+            // 性能优化：移除额外的 shadow，减少渲染压力
     }
 }
 
