@@ -6,8 +6,13 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		8CB534532EDE8EC800696FF5 /* FoundationModels.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8CB534542EDE8EC800696FF5 /* FoundationModels.framework */; settings = {ATTRIBUTES = (Weak, ); }; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		8CB534452EDE8EC800696FF4 /* ai-ws.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "ai-ws.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		8CB534542EDE8EC800696FF5 /* FoundationModels.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = FoundationModels.framework; sourceTree = "<sdkroot>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -23,17 +28,27 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				8CB534532EDE8EC800696FF5 /* FoundationModels.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		8CAFC46A2EE2DFDD00BAD49C /* Recovered References */ = {
+			isa = PBXGroup;
+			children = (
+				8CB534542EDE8EC800696FF5 /* FoundationModels.framework */,
+			);
+			name = "Recovered References";
+			sourceTree = "<group>";
+		};
 		8CB5343C2EDE8EC800696FF4 = {
 			isa = PBXGroup;
 			children = (
 				8CB534472EDE8EC800696FF4 /* ai-ws */,
 				8CB534462EDE8EC800696FF4 /* Products */,
+				8CAFC46A2EE2DFDD00BAD49C /* Recovered References */,
 			);
 			sourceTree = "<group>";
 		};
@@ -251,6 +266,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 2HZLQ4V556;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -282,6 +298,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 2HZLQ4V556;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;

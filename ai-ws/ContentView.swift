@@ -1,21 +1,9 @@
-//
-//  ContentView.swift
-//  ai-ws
-//
-//  Created by Ricardo on 2025/12/2.
-//
-
 import SwiftUI
 
+// 主入口内容视图：NeonLedger 赛博朋克风格记账App
 struct ContentView: View {
     var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
-        }
-        .padding()
+        NeonLedgerAppView()
     }
 }
 
