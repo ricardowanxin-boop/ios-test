@@ -3,21 +3,23 @@ import UIKit
 import CryptoKit
 
 // 聊天消息结构体
+// 核心业务模型：定义了聊天消息的数据结构，包含状态管理字段
 struct ChatMessage: Identifiable, Equatable {
     let id = UUID()
-    let isUser: Bool
+    let isUser: Bool // 区分消息来源（用户/助手）
     let timestamp = Date()
     
     // 普通消息字段
     var text: String
     
-    // Loading 状态
+    // Loading 状态：用于显示AI思考中的动画
     var isLoading: Bool
     
-    // 打字机效果相关字段
+    // 复杂交互：打字机效果相关字段
+    // fullText 存储完整回复，text 存储当前显示的部分
     var fullText: String
-    var isTyping: Bool
-    var typingSpeed: TimeInterval = 0.05 // 每字符显示时间
+    var isTyping: Bool // 标记是否正在进行打字机动画
+    var typingSpeed: TimeInterval = 0.05 // 动画速率：每字符显示时间
     
     // 用户消息初始化
     init(text: String, isUser: Bool) {
@@ -30,7 +32,7 @@ struct ChatMessage: Identifiable, Equatable {
     
     // 助手消息初始化
     init(text: String, isUser: Bool, isLoading: Bool) {
-        // 确保初始文本不为空，避免气泡过小
+        // 确保初始文本不为空，避免气泡过小，优化UI体验
         self.text = text.isEmpty ? " " : text
         self.isUser = isUser
         self.isLoading = isLoading
@@ -47,28 +49,33 @@ struct ChatMessage: Identifiable, Equatable {
 }
 
 // 聊天气泡视图
+// UI组件：根据消息类型（发送/接收）和状态渲染不同的气泡样式
 struct ChatBubble: View {
     @Binding var message: ChatMessage
     
     var body: some View {
         HStack {
             if message.isUser {
+                // 用户消息：右侧显示，绿色背景
                 Spacer()
                 VStack(alignment: .trailing, spacing: 5) {
                     Text(message.text)
                         .padding(12)
                         .background(Color.wechatGreen)
                         .foregroundColor(.white)
+                        // 使用自定义圆角扩展，实现气泡尖角效果
                         .cornerRadius(18, corners: [.topLeft, .topRight, .bottomLeft])
                         .frame(maxWidth: 350, alignment: .trailing)
-                    Text("14:23")
+                    Text("14:23") // TODO: 格式化真实时间
                         .font(.system(size: 12))
                         .foregroundColor(.wechatGray)
                 }
                 .padding(.trailing, 15)
             } else {
+                // 助手消息：左侧显示，白色背景，带头像
                 VStack(alignment: .leading, spacing: 5) {
                     HStack(alignment: .top, spacing: 10) {
+                        // AI头像
                         ZStack {
                             Circle()
                                 .fill(Color.wechatGray)
@@ -78,12 +85,12 @@ struct ChatBubble: View {
                                 .foregroundColor(.white)
                         }
                         
-                        // 根据消息状态显示不同内容
+                        // 核心交互：根据消息状态动态切换显示内容
                         if message.isLoading {
-                            // 显示loading动画
+                            // 状态1：AI思考中，显示Loading动画
                             LoadingView()
                         } else {
-                            // 显示普通消息（支持打字机效果）
+                            // 状态2：内容显示（支持打字机效果的动态更新）
                             Text(message.text)
                                 .padding(12)
                                 .background(Color.white)
@@ -91,7 +98,7 @@ struct ChatBubble: View {
                                 .cornerRadius(18, corners: [.topLeft, .topRight, .bottomRight])
                                 .frame(maxWidth: 350, alignment: .leading)
                                 .lineLimit(nil) // 允许文本换行
-                                .fixedSize(horizontal: false, vertical: true) // 垂直方向自适应大小
+                                .fixedSize(horizontal: false, vertical: true) // 垂直方向自适应大小，防止截断
                         }
                     }
                     Text("14:23")
@@ -153,6 +160,7 @@ struct QuickAction: View {
 }
 
 // Loading 动画视图（三个黑色小气泡圆点循环闪动）
+// 复杂交互：使用 scaleEffect 和 opacity 实现呼吸闪烁效果，模拟AI思考过程
 struct LoadingView: View {
     @State private var animate = false
     private let animationDuration: TimeInterval = 1.5
@@ -163,11 +171,13 @@ struct LoadingView: View {
                 Circle()
                     .fill(Color.wechatBlack)
                     .frame(width: 10, height: 10)
+                    // 动画效果：缩放和透明度变化
                     .scaleEffect(animate ? 1.0 : 0.5)
                     .opacity(animate ? 1.0 : 0.3)
                     .animation(
                         Animation.easeInOut(duration: animationDuration)
                             .repeatForever()
+                            // 核心技巧：通过 delay 实现波浪式动画
                             .delay(Double(index) * animationDuration / 3)
                     , value: animate)
             }
@@ -184,12 +194,13 @@ struct LoadingView: View {
 }
 
 // 智能助手主视图
+// 核心业务：集成了聊天界面、AI模型调用、消息状态管理和交互动画
 struct SmartAssistantView: View {
     let onClose: () -> Void
     @State private var inputText = ""
-    @State private var messages: [ChatMessage] = []
-    @State private var showWelcome = true
-    @State private var isGenerating = false
+    @State private var messages: [ChatMessage] = [] // 消息列表数据源
+    @State private var showWelcome = true // 是否显示欢迎页
+    @State private var isGenerating = false // 是否正在生成回复（用于禁用输入等）
     @State private var modelAvailable = false
     
     // 初始化时检查模型可用性
@@ -226,6 +237,7 @@ struct SmartAssistantView: View {
                             }
                         }
                         
+                        // 渲染消息列表
                         ForEach(messages.indices, id: \.self) { index in
                             ChatBubble(message: $messages[index])
                         }
@@ -236,6 +248,7 @@ struct SmartAssistantView: View {
                             .foregroundColor(.clear)
                             .id("bottom")
                     }
+                    // 监听消息变化，自动滚动到底部
                     .onChange(of: messages) { _ in
                         withAnimation {
                             proxy.scrollTo("bottom", anchor: .bottom)
@@ -272,7 +285,8 @@ struct SmartAssistantView: View {
                         .disabled(inputText.isEmpty)
                     }
                     .padding(.vertical, 10)
-                    .padding(.bottom, 5 + (UIApplication.shared.windows.first?.safeAreaInsets.bottom ?? 0) / 2) // 优化底部安全距离，减少留白
+                    // 优化底部安全距离，减少留白
+                    .padding(.bottom, 5 + (UIApplication.shared.windows.first?.safeAreaInsets.bottom ?? 0) / 2) 
                     .background(Color.white)
                 }
             }
@@ -285,23 +299,25 @@ struct SmartAssistantView: View {
     }
     
     // 发送消息
+    // 业务逻辑：处理用户输入，更新UI，触发AI任务
     private func sendMessage(_ text: String) {
         guard !text.isEmpty else { return }
         
-        // 添加用户消息
+        // 1. 立即显示用户消息
         withAnimation {
             messages.append(ChatMessage(text: text, isUser: true))
             inputText = ""
             showWelcome = false
         }
         
-        // 调用AI生成回复
+        // 2. 异步调用AI生成回复
         Task {
             await generateAIResponse(for: text)
         }
     }
     
     // 生成AI回复
+    // 核心流程：Loading -> 调用AI -> 接收响应 -> 渲染打字机动画
     private func generateAIResponse(for prompt: String) async {
         print("=== 开始生成AI回复 ===")
         
@@ -335,7 +351,7 @@ struct SmartAssistantView: View {
             print("   - AI生成成功，回复长度: \(aiText.count)")
             finalResponse = aiText
         } else {
-            // AI生成失败，使用模拟回复
+            // AI生成失败，使用模拟回复（兜底策略）
             print("   - AI生成失败，使用模拟回复")
             finalResponse = getSimulatedResponse(for: prompt) + "\n\n(当前为模拟回复)"
         }
@@ -366,6 +382,7 @@ struct SmartAssistantView: View {
     }
     
     // 应用打字机效果
+    // 复杂交互实现：通过定时器逐字符更新 UI，模拟真人输入感
     private func applyTypingEffect(to message: ChatMessage, fullText: String) async {
         // 打印调试信息
         print("=== 开始打字机效果 ===")
@@ -398,6 +415,7 @@ struct SmartAssistantView: View {
             }
             
             // 等待一段时间，实现打字效果
+            // 50毫秒/字符，产生流畅的打字感
             try? await Task.sleep(nanoseconds: 50_000_000) // 0.05秒
         }
         
@@ -427,11 +445,13 @@ struct SmartAssistantView: View {
     }
     
     // HTTP调用讯飞星火模型
+    // Native Feature: 使用 URLSession 发起网络请求，CryptoKit 进行签名计算
     private func callXunfeiSparkLite(prompt: String) async -> String? {
         print("   - 进入callXunfeiSparkLite，prompt: \(prompt)")
         print("   - 开始调用讯飞星火模型 API")
         
         // 1. 配置 API Key 和 URL
+        // 注意：生产环境应将 Key 存储在安全位置，避免硬编码
         let apiKey = "SlxhOUgBFxZlObBfHDhu:rAYzMvBMImyWaaUUTKkJ"
         let urlString = "https://spark-api-open.xf-yun.com/v2/chat/completions"
         let url = URL(string: urlString)! 
@@ -453,6 +473,7 @@ struct SmartAssistantView: View {
         }
         
         // 4. 生成当前 UTC 时间 (RFC 1123 格式)
+        // 鉴权要求：时间必须与服务器时间误差在5分钟内
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "EEE, dd MMM yyyy HH:mm:ss GMT"
         dateFormatter.locale = Locale(identifier: "en_US_POSIX")
@@ -460,6 +481,7 @@ struct SmartAssistantView: View {
         let currentTime = dateFormatter.string(from: Date())
         
         // 5. 构造签名字符串
+        // 鉴权规范：host + date + request-line
         let method = "POST"
         let uri = "/v2/chat/completions"
         let signatureOrigin = "host: \(host)\ndate: \(currentTime)\n\(method) \(uri) HTTP/1.1"
@@ -495,6 +517,7 @@ struct SmartAssistantView: View {
             request.httpBody = try JSONSerialization.data(withJSONObject: requestBody)
             
             // 10. 发送请求
+            // 使用 Swift Concurrency 的 async/await 语法
             let (data, response) = try await URLSession.shared.data(for: request)
             
             // 11. 处理响应
@@ -535,6 +558,7 @@ struct SmartAssistantView: View {
     }
     
     // 生成 HMAC-SHA256 签名
+    // Native Feature: 使用 CryptoKit 进行加密计算
     private func generateHMACSignature(signString: String, apiSecret: String) -> String? {
         guard let apiSecretData = apiSecret.data(using: .utf8),
               let signData = signString.data(using: .utf8) else {

@@ -1,6 +1,9 @@
 import SwiftUI
 import Charts
 
+// 首页视图
+// 核心业务：展示资产概览、快捷入口和近期账单
+// 交互设计：采用垂直滚动布局，配合水平滚动的快捷操作区
 struct HomeView: View {
     @Environment(ModelData.self) var modelData
     
@@ -8,13 +11,16 @@ struct HomeView: View {
         ScrollView {
             VStack(spacing: 24) {
                 // 资产卡片
+                // UI组件：位于顶部的核心数据展示，使用玻璃拟态背景
                 AssetCard()
                     .padding(.horizontal)
                 
                 // 快捷功能卡片
+                // 交互设计：水平滚动区域，支持动态扩展功能入口
                 HStack(spacing: 0) {
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 30) {
+                            // 记账入口
                             NavigationLink(value: "addTransaction") {
                                 VStack(spacing: 8) {
                                     ZStack {
@@ -23,6 +29,7 @@ struct HomeView: View {
                                             .fill(Color.wechatGreen.opacity(0.1))
                                             .frame(width: 48, height: 48)
                                         
+                                        // Native Feature: 使用 SF Symbols 5.0 的 symbolEffect 实现弹性动画
                                         Image(systemName: "plus.circle.fill")
                                             .font(.system(size: 24))
                                             .foregroundColor(.wechatGreen)
@@ -78,8 +85,10 @@ struct HomeView: View {
                     .padding(.horizontal, 20)
                     
                     // 账单图表
+                    // Native Feature: 使用 Swift Charts 框架绘制原生图表
                     if #available(iOS 16.0, *) {
                         Chart {
+                            // 使用 BarMark 绘制柱状图，支持声明式数据绑定
                             BarMark(
                                 x: .value("类别", "早餐"),
                                 y: .value("金额", 0)
@@ -106,11 +115,13 @@ struct HomeView: View {
                         }
                         .frame(height: 200)
                         .padding(20)
+                        // UI Style: 应用自定义玻璃拟态效果，提升视觉层级
                         .glassEffect(Glass.regular, in: RoundedRectangle(cornerRadius: 24))
                         .padding(.horizontal, 15)
                     }
                     
                     // 示例列表
+                    // 性能优化：使用 LazyVStack 实现列表的按需加载
                     LazyVStack(spacing: 12) {
                         TransactionItem(
                             icon: "fork.knife",

@@ -1,15 +1,17 @@
 import SwiftUI
 
 // 新版视觉设计系统
+// 定义了全局通用的颜色语义，确保 Light/Dark 模式下的视觉一致性
 struct NeonTheme {
-    // 品牌主色：深空蓝
+    // 品牌主色：深空蓝，用于核心操作按钮、选中状态
     static let primary = Color(hex: "#165DFF")
-    // 辅助色：浅金
+    // 辅助色：浅金，用于VIP标识、次级强调
     static let secondary = Color(hex: "#F5D061")
-    // 辅助色：活力橙
+    // 辅助色：活力橙，用于图表强调、警告提示
     static let accent = Color(hex: "#FF7D00")
     
     // 中性色（适配深色模式）
+    // 自动适配系统外观设置，保证文本可读性
     static let textPrimary = Color("TextPrimary") // 需在 Assets 中定义，这里暂时使用系统自适应色
     static let textSecondary = Color("TextSecondary")
     
@@ -26,6 +28,7 @@ extension Color {
     static let neonAccent = NeonTheme.accent
     
     // 语义化颜色
+    // Native Feature: 使用 UIColor 动态闭包适配深色模式 (Dark Mode)
     static let neonBackground = Color(uiColor: UIColor { traitCollection in
         return traitCollection.userInterfaceStyle == .dark ? UIColor(hex: "#000000")! : UIColor(hex: "#F7F8FA")!
     })
@@ -39,6 +42,7 @@ extension Color {
     static let neonTextTertiary = Color(uiColor: .tertiaryLabel)
     
     // MARK: - Legacy Compatibility (Mapped to new system where appropriate)
+    // 兼容旧版微信风格代码，将其映射到新的 Neon 设计系统
     // 主色调
     static let wechatWhite = Color(hex: "#FFFFFF") // 白色背景
     static let wechatGreen = neonPrimary // 替换为新主色
@@ -68,6 +72,7 @@ extension Color {
     // ... (Keep existing init and other extensions)
     
     // 初始化方法
+    // Native Feature: 支持 12-bit (RGB), 24-bit (RGB), 32-bit (ARGB) 的 Hex 颜色解析
     init(hex: String) {
         let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
         var int: UInt64 = 0
@@ -150,6 +155,7 @@ extension LinearGradient {
 }
 
 // 自定义圆角形状
+// UI Style: 实现部分圆角（Partial Corner Radius）效果，如聊天气泡
 struct RoundedCorner: Shape {
     var radius: CGFloat = .infinity
     var corners: UIRectCorner = .allCorners

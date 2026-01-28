@@ -1,9 +1,12 @@
 import SwiftUI
 
 // MARK: - Dashboard Components
+// 核心业务组件库：包含首页所需的各类功能卡片和列表项
 
 // 资产卡片
+// UI组件：展示用户总资产及收支统计，支持时间维度切换
 struct AssetCard: View {
+    // 状态管理：控制当前选中的时间维度（日/周/月）
     @State private var selectedTimeFrame = "month"
     
     var body: some View {
@@ -39,11 +42,13 @@ struct AssetCard: View {
             .padding(.top, 20)
         }
         .padding(24)
+        // UI Style: 应用标准玻璃拟态效果
         .glassEffect(Glass.regular, in: RoundedRectangle(cornerRadius: 24))
     }
 }
 
 // 时间维度切换按钮
+// UI组件：自定义胶囊状切换按钮，选中状态带有高亮描边
 struct TimeFrameButton: View {
     let label: String
     let isSelected: Bool
@@ -87,6 +92,7 @@ struct StatItem: View {
 }
 
 // 快捷操作按钮
+// UI组件：圆形图标按钮，集成 iOS 17 Symbol Effect 动画
 struct QuickActionButton: View {
     let icon: String
     let label: String
@@ -102,6 +108,7 @@ struct QuickActionButton: View {
                         .fill(color.opacity(0.1))
                         .frame(width: 48, height: 48)
                     
+                    // Native Feature: SF Symbols 符号动画
                     Image(systemName: icon)
                         .font(.system(size: 24))
                         .foregroundColor(color)
@@ -142,6 +149,7 @@ struct EncryptedActionButton: View {
 }
 
 // 账单交易项
+// UI组件：列表项展示，包含分类图标、金额、备注等信息
 struct TransactionItem: View {
     let icon: String
     let category: String
@@ -200,6 +208,7 @@ struct TransactionItem: View {
         }
         .padding(.horizontal, 20)
         .padding(.vertical, 12)
+        // UI Style: 列表项使用轻量级玻璃背景，提升质感
         .glassEffect(Glass.regular.tint(Color.neonSurface), in: RoundedRectangle(cornerRadius: 16)) // 为每个项目添加玻璃背景
     }
 }
