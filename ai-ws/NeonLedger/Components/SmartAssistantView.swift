@@ -249,7 +249,7 @@ struct SmartAssistantView: View {
                             .id("bottom")
                     }
                     // 监听消息变化，自动滚动到底部
-                    .onChange(of: messages) { _ in
+                    .onChange(of: messages) { _, _ in
                         withAnimation {
                             proxy.scrollTo("bottom", anchor: .bottom)
                         }
@@ -286,7 +286,7 @@ struct SmartAssistantView: View {
                     }
                     .padding(.vertical, 10)
                     // 优化底部安全距离，减少留白
-                    .padding(.bottom, 5 + (UIApplication.shared.windows.first?.safeAreaInsets.bottom ?? 0) / 2) 
+                    .padding(.bottom, 5 + (UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first?.windows.first?.safeAreaInsets.bottom ?? 0) / 2) 
                     .background(Color.white)
                 }
             }

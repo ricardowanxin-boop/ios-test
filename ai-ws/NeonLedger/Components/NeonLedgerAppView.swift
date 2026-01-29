@@ -110,7 +110,7 @@ struct NeonLedgerAppView: View {
                 }
                 .ignoresSafeArea(edges: .bottom) // 关键布局：让内容区域延伸到底部安全区之下，实现沉浸式效果
                 // 监听 path 变化，当返回首页时重置选中状态
-                .onChange(of: path) { newPath in
+                .onChange(of: path) { _, newPath in
                     if newPath.isEmpty {
                         // 当路径清空（回到首页）时，带动画重置 Tab 选中状态为 Home
                         withAnimation(.spring(response: 0.4, dampingFraction: 0.65, blendDuration: 0.5)) {
