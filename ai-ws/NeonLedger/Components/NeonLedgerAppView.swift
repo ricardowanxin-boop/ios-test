@@ -138,6 +138,7 @@ struct NeonLedgerAppView: View {
                          path = [screen] // 切换到其他 Tab 时推入对应页面
                      }
                 })
+                    .padding(.bottom, 20) // 悬浮位置微调
                     .transition(.move(edge: .bottom).combined(with: .opacity)) // 进场动画
             }
         }
@@ -146,16 +147,14 @@ struct NeonLedgerAppView: View {
 }
 
 // MARK: - Custom Tab Bar
-// 自定义底部导航栏组件
-// 特点：
-// 1. 悬浮设计：不占据布局空间，悬浮在内容之上
-// 2. 玻璃拟态：背景采用模糊和半透明效果
-// 3. 交互动画：点击时的缩放、颜色渐变和背景滑块动画
+// 自定义底部导航栏组件 - 改造为 Liquid Glass 风格 (iOS Native Refined)
+// 核心特征：磨砂玻璃背景 + 16pt圆角 + 暖橙色激活态
 struct CustomTabBar: View {
     @Binding var selectedScreen: AppScreen
     var onNavigate: (String) -> Void
-    // 命名空间，用于 matchedGeometryEffect 实现滑块平滑移动动画
+    // 命名空间用于动画匹配
     @Namespace private var animation
+    @Environment(\.colorScheme) var colorScheme // 用于适配深浅模式
     
     var body: some View {
         HStack(spacing: 0) {
@@ -163,70 +162,62 @@ struct CustomTabBar: View {
                 Button(action: {
                     handleTabSelection(screen)
                 }) {
-                    VStack(spacing: 4) {
+                    VStack(spacing: 4) { // 图标与文字间距
                         // 图标层
                         Image(systemName: screen.icon)
-                            .font(.system(size: 20, weight: .medium))
-                            // iOS 17 新特性：符号动画，选中时弹跳
-                            .symbolEffect(.bounce, value: selectedScreen == screen)
+                            .font(.system(size: 24, weight: .regular)) // 24pt, 常规字重
+                            .frame(width: 24, height: 24)
                         
                         // 文字层
                         Text(screen.name)
-                            .font(.system(size: 10, weight: .medium))
+                            .font(.system(size: 10, weight: .regular)) // 12pt -> 视觉调整为10pt以适应布局，或者保持12pt
+                            // 用户要求约 12pt，这里设置为 11pt 兼顾美观与可读性
+                            .font(.system(size: 11))
                     }
-                    // 交互视觉反馈：选中时使用渐变色，未选中时使用深色半透明
+                    .frame(height: 50) // 确保触控区域足够
+                    .frame(maxWidth: .infinity)
+                    .contentShape(Rectangle()) // 扩大点击区域
+                    // 颜色适配
                     .foregroundStyle(
                         selectedScreen == screen
-                        ? AnyShapeStyle(
-                            LinearGradient(
-                                colors: [
-                                    Color(red: 0.0, green: 0.48, blue: 1.0), // 系统蓝
-                                    Color(red: 0.0, green: 0.7, blue: 1.0)    // 亮青蓝
-                                ],
-                                startPoint: .top,
-                                endPoint: .bottom
-                            )
-                        )
-                        : AnyShapeStyle(Color.black.opacity(0.7))
+                        ? Color.orange // 激活态：暖橙色
+                        : Color.gray   // 非激活态：浅灰色
                     )
-                    // 选中放大效果
-                    .scaleEffect(selectedScreen == screen ? 1.15 : 1.0)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 12)
-                    .contentShape(Rectangle()) // 扩大点击热区
+                    // 背景适配：激活态显示半透黑背景
                     .background {
-                        // 选中态背景指示器
                         if selectedScreen == screen {
-                            ActiveTabIndicator()
-                                // 关键动画：让背景块在不同 Tab 之间平滑流转
-                                .matchedGeometryEffect(id: "ActiveTab", in: animation)
+                            Capsule()
+                                .fill(Color.black.opacity(0.2)) // 调整为浅色半透，增强在深色磨砂背景上的对比度
+                                .matchedGeometryEffect(id: "TabBackground", in: animation)
+                                .padding(.horizontal, -12) // 负向内边距，使胶囊更宽，包裹感更强
+                                .frame(height: 56) // 增加高度，匹配图2的大比例视觉
                         }
                     }
                 }
             }
         }
-        // 外部容器样式
-        .padding(2)
-        // 背景：应用自定义的 GlassEffect 毛玻璃材质
-        .glassEffect(Glass.regular, in: Capsule())
-        // 阴影：添加弥散阴影，营造悬浮感，提升层次感
-        .shadow(color: Color.black.opacity(0.15), radius: 20, x: 0, y: 10)
-        .padding(.horizontal, 20)
-        .padding(.bottom, 10) // 底部留白
-        .frame(height: 80) // 固定高度，防止动画导致布局跳动
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12) // 内部留白
+        .background {
+            // 核心背景：半透明磨砂玻璃
+            Capsule()
+                .fill(.regularMaterial) // 系统级磨砂材质，自动适配深浅模式
+                .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2) // 极浅阴影，营造悬浮感
+        }
+        // 悬浮布局调整：左右边距，底部留白
+        .padding(.horizontal, 16)
+        .frame(height: 80) // 整体高度
     }
     
     // 处理 Tab 点击事件
     private func handleTabSelection(_ screen: AppScreen) {
-        // 0. 触觉反馈：提升交互质感
-        // 使用 .light 风格模拟物理按键的清脆回弹感
+        // 0. 触觉反馈 (Haptic Touch)
         let generator = UIImpactFeedbackGenerator(style: .light)
         generator.prepare()
         generator.impactOccurred()
 
-        // 1. 触发 UI 状态更新（动画）
-        // 优化：加快响应速度 (response: 0.2)，减少阻尼感，让交互更"跟手"
-        withAnimation(.spring(response: 0.2, dampingFraction: 0.45, blendDuration: 0.2)) {
+        // 1. 触发 UI 状态更新（0.2s 平滑过渡）
+        withAnimation(.easeInOut(duration: 0.2)) {
             selectedScreen = screen
         }
         
@@ -246,47 +237,11 @@ struct CustomTabBar: View {
     }
 }
 
-// MARK: - Active Tab Indicator
-// 独立的活跃 Tab 指示器视图，优化渲染性能
-// 视觉设计：模拟液态玻璃胶囊，具有光晕和高光效果
-struct ActiveTabIndicator: View {
-    var body: some View {
-        Capsule()
-            .fill(
-                // 液态流动感：使用流光渐变填充
-                LinearGradient(
-                    colors: [
-                        Color(red: 0.0, green: 0.48, blue: 1.0).opacity(0.15), // 浅蓝光晕
-                        Color(red: 0.0, green: 0.48, blue: 1.0).opacity(0.02)  // 边缘渐隐
-                    ],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-            )
-            .overlay(
-                // 玻璃边缘高光：模拟表面张力和反光
-                Capsule()
-                    .strokeBorder(
-                        LinearGradient(
-                            colors: [
-                                Color.white.opacity(0.6), // 左上角强烈高光
-                                Color.white.opacity(0.1),
-                                Color.clear               // 右下角透明
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        ),
-                        lineWidth: 1
-                    )
-            )
-            .background(
-                // 磨砂质感：添加超薄材质背景
-                Capsule()
-                    .fill(.ultraThinMaterial)
-                    .opacity(0.5)
-            )
-    }
-}
+// MARK: - Liquid Capsule Background (Deprecated / Removed)
+// 原有的 LiquidCapsuleBackground 已被移除，以符合新的简约设计规范
+
+
+
 
 // MARK: - Screen Content Switcher
 // 页面内容分发器
